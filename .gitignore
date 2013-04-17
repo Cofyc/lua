@@ -1,0 +1,4 @@
+*.[ao]
+tags
+/src/lua
+/src/luac

@@ -1,16 +1,19 @@
 /*
-** $Id: luac.c,v 1.69 2011/11/29 17:46:33 lhf Exp $
-** Lua compiler (saves bytecodes to files; also list bytecodes)
+** $Id: luac.c,v 1.71 2014/11/26 12:08:59 lhf Exp $
+** Lua compiler (saves bytecodes to files; also lists bytecodes)
 ** See Copyright Notice in lua.h
 */
 
+#define luac_c
+#define LUA_CORE
+
+#include "lprefix.h"
+
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define luac_c
-#define LUA_CORE
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -203,7 +206,7 @@ int main(int argc, char* argv[])
 }
 
 /*
-** $Id: print.c,v 1.68 2011/09/30 10:21:20 lhf Exp $
+** $Id: print.c,v 1.74 2014/07/21 01:41:45 lhf Exp $
 ** print bytecodes
 ** See Copyright Notice in lua.h
 */
@@ -223,7 +226,7 @@ int main(int argc, char* argv[])
 static void PrintString(const TString* ts)
 {
  const char* s=getstr(ts);
- size_t i,n=ts->tsv.len;
+ size_t i,n=ts->len;
  printf("%c",'"');
  for (i=0; i<n; i++)
  {
@@ -259,11 +262,14 @@ static void PrintConstant(const Proto* f, int i)
   case LUA_TBOOLEAN:
 	printf(bvalue(o) ? "true" : "false");
 	break;
-  case LUA_TNUMBER:
-	printf(LUA_NUMBER_FMT,nvalue(o));
+  case LUA_TNUMFLT:
+	printf(LUA_NUMBER_FMT,fltvalue(o));
 	break;
-  case LUA_TSTRING:
-	PrintString(rawtsvalue(o));
+  case LUA_TNUMINT:
+	printf(LUA_INTEGER_FMT,ivalue(o));
+	break;
+  case LUA_TSHRSTR: case LUA_TLNGSTR:
+	PrintString(tsvalue(o));
 	break;
   default:				/* cannot happen */
 	printf("? type=%d",ttype(o));
@@ -337,8 +343,14 @@ static void PrintCode(const Proto* f)
    case OP_ADD:
    case OP_SUB:
    case OP_MUL:
-   case OP_DIV:
    case OP_POW:
+   case OP_DIV:
+   case OP_IDIV:
+   case OP_BAND:
+   case OP_BOR:
+   case OP_BXOR:
+   case OP_SHL:
+   case OP_SHR:
    case OP_EQ:
    case OP_LT:
    case OP_LE:
